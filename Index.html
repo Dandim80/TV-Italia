@@ -1,0 +1,65 @@
+ <!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TV Streaming</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; flex-direction: row; }
+    #channel-list { width: 250px; background: #222; color: white; overflow-y: auto; padding: 1em; }
+    #channel-list div { padding: 8px; cursor: pointer; border-bottom: 1px solid #444; }
+    #channel-list div:hover { background: #444; }
+    #player { flex-grow: 1; background: black; display: flex; justify-content: center; align-items: center; }
+    video { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="channel-list"></div>
+  <div id="player">
+    <video id="video" controls autoplay></video>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const channels = [
+      { name: "Rai 1", url: "https://rai1-live.akamaized.net/hls/live/598509/RAI1/master.m3u8" },
+      { name: "Rai 2", url: "https://rai2-live.akamaized.net/hls/live/598510/RAI2/master.m3u8" },
+      { name: "Rai 3", url: "https://rai3-live.akamaized.net/hls/live/598511/RAI3/master.m3u8" },
+      { name: "TV8", url: "https://hlslive-web-gcdn-skycdn-it.akamaized.net/TACT/11223/tv8web/master.m3u8" },
+      { name: "La7", url: "https://d3749synfikwkv.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-74ylxpgd78bpb/Live.m3u8" }
+      // Nessun .mpd incluso
+    ];
+
+    const channelList = document.getElementById('channel-list');
+    const video = document.getElementById('video');
+    let hls;
+
+    function loadChannel(url) {
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+
+      if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+      } else {
+        alert("Il tuo browser non supporta HLS");
+      }
+    }
+
+    channels.forEach(chan => {
+      const div = document.createElement('div');
+      div.textContent = chan.name;
+      div.onclick = () => loadChannel(chan.url);
+      channelList.appendChild(div);
+    });
+
+    // Carica il primo canale
+    loadChannel(channels[0].url);
+  </script>
+</body>
+</html>
