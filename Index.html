@@ -1,65 +1,52 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TV Streaming</title>
+  <meta charset="UTF-8">
+  <title>IPTV Canali Italiani</title>
+  <script src="https://vjs.zencdn.net/8.5.2/video.min.js"></script>
+  <link href="https://vjs.zencdn.net/8.5.2/video-js.css" rel="stylesheet" />
   <style>
-    body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; flex-direction: row; }
-    #channel-list { width: 250px; background: #222; color: white; overflow-y: auto; padding: 1em; }
-    #channel-list div { padding: 8px; cursor: pointer; border-bottom: 1px solid #444; }
-    #channel-list div:hover { background: #444; }
-    #player { flex-grow: 1; background: black; display: flex; justify-content: center; align-items: center; }
-    video { width: 100%; height: 100%; }
+    body { font-family: sans-serif; text-align: center; background: #111; color: #fff; }
+    select, video { width: 90%; max-width: 800px; margin-top: 20px; }
+    video { height: auto; }
   </style>
 </head>
 <body>
-  <div id="channel-list"></div>
-  <div id="player">
-    <video id="video" controls autoplay></video>
-  </div>
+  <h1>Canali IPTV Italiani</h1>
+  <select id="canali" onchange="cambiaCanale()">
+    <option>Seleziona un canale...</option>
+  </select>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <video id="player" class="video-js vjs-default-skin" controls autoplay preload="auto"></video>
+
   <script>
-    const channels = [
-      { name: "Rai 1", url: "https://rai1-live.akamaized.net/hls/live/598509/RAI1/master.m3u8" },
-      { name: "Rai 2", url: "https://rai2-live.akamaized.net/hls/live/598510/RAI2/master.m3u8" },
-      { name: "Rai 3", url: "https://rai3-live.akamaized.net/hls/live/598511/RAI3/master.m3u8" },
-      { name: "TV8", url: "https://hlslive-web-gcdn-skycdn-it.akamaized.net/TACT/11223/tv8web/master.m3u8" },
-      { name: "La7", url: "https://d3749synfikwkv.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-74ylxpgd78bpb/Live.m3u8" }
-      // Nessun .mpd incluso
-    ];
+    const listaUrl = "https://iptv-org.github.io/iptv/countries/it.m3u";
 
-    const channelList = document.getElementById('channel-list');
-    const video = document.getElementById('video');
-    let hls;
+    fetch(listaUrl)
+      .then(res => res.text())
+      .then(data => {
+        const righe = data.split("#EXTINF:-1");
+        const canali = righe.slice(1).map(riga => {
+          const [info, url] = riga.trim().split("\n");
+          const nome = info.match(/,(.*)/)?.[1] || "Senza nome";
+          return { nome, url };
+        });
 
-    function loadChannel(url) {
-      if (hls) {
-        hls.destroy();
-        hls = null;
-      }
+        const select = document.getElementById("canali");
+        canali.forEach(({ nome, url }) => {
+          const option = document.createElement("option");
+          option.value = url;
+          option.textContent = nome;
+          select.appendChild(option);
+        });
+      });
 
-      if (Hls.isSupported()) {
-        hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-      } else {
-        alert("Il tuo browser non supporta HLS");
-      }
+    function cambiaCanale() {
+      const player = videojs("player");
+      const url = document.getElementById("canali").value;
+      player.src({ src: url, type: "application/x-mpegURL" });
+      player.play();
     }
-
-    channels.forEach(chan => {
-      const div = document.createElement('div');
-      div.textContent = chan.name;
-      div.onclick = () => loadChannel(chan.url);
-      channelList.appendChild(div);
-    });
-
-    // Carica il primo canale
-    loadChannel(channels[0].url);
   </script>
 </body>
 </html>
